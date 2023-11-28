@@ -4,6 +4,9 @@
 2. [Understanding findOne() & find()](#schema2)
 3. [Working with Comparison Operators.](#schema3)
 4. [Querying Embedded Fields & Arrays](#schema4)
+5. [Diving Deeper Into Querying Arrays](#schema5)
+6. [Understanding Cursors](#schema6)
+
 
 
 <hr>
@@ -208,3 +211,112 @@ query sería asi:
 movieData> db.movies.findOne({genres:['Drama']})
 
 ```
+
+<hr>
+
+<a name="schema5"></a>
+
+## 5. Diving Deeper Into Querying Arrays
+
+```
+db.users.find({"hobbies.title":"Sports"})
+```
+Aquí hay algunos de los query selectors comunes para consultas con array:
+
+- $elemMatch: Se utiliza para buscar documentos que contienen al menos un elemento que coincide con todos 
+los criterios de consulta dentro del arreglo.
+
+```
+// Encuentra documentos donde al menos un elemento del arreglo "etiquetas" es "rojo" y "grande".
+db.collection.find({ etiquetas: { $elemMatch: { $eq: "rojo", $eq: "grande" } } });
+```
+
+- $size: Se utiliza para buscar documentos cuyo arreglo tiene un tamaño específico.
+
+```
+// Encuentra documentos donde el tamaño del arreglo "colores" es 3.
+db.collection.find({ colores: { $size: 3 } });
+```
+
+- $all: Se utiliza para buscar documentos donde todos los elementos del arreglo coinciden con los valores especificados.
+
+```
+// Encuentra documentos donde todos los elementos del arreglo "etiquetas" son "rojo" y "verde".
+db.collection.find({ etiquetas: { $all: ["rojo", "verde"] } });
+```
+
+- $in: Se utiliza para buscar documentos donde al menos un elemento del arreglo coincide con al menos uno de los 
+valores especificados.
+```
+// Encuentra documentos donde al menos un elemento del arreglo "etiquetas" es "rojo" o "azul".
+db.collection.find({ etiquetas: { $in: ["rojo", "azul"] } });
+```
+
+- $nin: Se utiliza para buscar documentos donde ningún elemento del arreglo coincide con ninguno de los 
+valores especificados.
+
+javascript
+Copy code
+// Encuentra documentos donde ningún elemento del arreglo "etiquetas" es "amarillo" ni "verde".
+db.collection.find({ etiquetas: { $nin: ["amarillo", "verde"] } });
+
+
+<hr>
+
+<a name="schema6"></a>
+
+## 6. Understanding Cursors
+
+![read](./img/6read.png)
+
+
+```
+const dataCursor = db.movies.find()
+dataCursor.next()
+```
+
+Cada vez que ejecutamos `dataCursor.next()` nos da un valor distinto porque el cursor apunta a otro elemento.
+
+Podemos usar funciones cuando tenemos creado el cursor como por ejemplo:
+```
+movieData> dataCursor.forEach(doc => {printjson(doc)})
+```
+Al terminar de la ejecuación anterior, si volvemos a ejecutar `dataCursor.next()` se produce el siguiente error.
+
+```
+movieData> dataCursor.next()
+MongoCursorExhaustedError: Cursor is exhausted
+```
+
+Este error indica que has intentado avanzar en un cursor que ya ha alcanzado el final de los resultados. Para evitar 
+este error, debes verificar si hay documentos disponibles antes de intentar obtener el siguiente. Puedes hacer esto 
+utilizando el método hasNext() del cursor para comprobar si hay más documentos disponibles antes de llamar a next()
+```
+movieData> dataCursor.hasNext()
+false
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
