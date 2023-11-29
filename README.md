@@ -6,6 +6,9 @@
 4. [Querying Embedded Fields & Arrays](#schema4)
 5. [Diving Deeper Into Querying Arrays](#schema5)
 6. [Understanding Cursors](#schema6)
+7. [Sorting, Skipping & Limiting Cursors Results](#schema7)
+8. [Using Projection to Shape our Results](#schema8)
+9. [Understanding $slice](#schema9)
 
 
 
@@ -296,27 +299,153 @@ movieData> dataCursor.hasNext()
 false
 ```
 
+<hr>
+
+<a name="schema5"></a>
+
+## 7. Sorting, Skipping & Limiting Cursors Results
+
+- Sorting
+
+En MongoDB, el método .sort() se utiliza para ordenar los resultados de una consulta en función de uno o 
+más campos. Puedes usarlo tanto en consultas de búsqueda como en consultas de agregación.
+
+La sintaxis básica es la siguiente:
+
+```
+db.collection.find().sort({ campo: 1 }); // Orden ascendente
+db.collection.find().sort({ campo: -1 }); // Orden descendente
+```
+
+Donde campo es el nombre del campo por el cual deseas ordenar, y el valor 1 indica orden ascendente, 
+mientras que -1 indica orden descendente.
 
 
+- Skipping
+El término "skipping" se refiere a la acción de omitir un número específico de documentos al realizar una consulta. 
+Puedes utilizar el método `.skip()` para indicar cuántos documentos deseas omitir antes de comenzar a devolver 
+resultados. Esto es comúnmente utilizado para la paginación de resultados.
+
+La sintaxis básica de .skip() es la siguiente:
+
+```
+db.collection.find().skip(numeroDeDocumentos);
+```
+
+Donde numeroDeDocumentos es la cantidad de documentos que deseas omitir antes de comenzar a recuperar resultados.
+
+- Limiting
+
+La acción de limitar el número de documentos devueltos en una consulta se realiza mediante el método `.limit().` 
+Este método se utiliza para especificar el límite superior en la cantidad de documentos que deseas recuperar.
+
+La sintaxis básica de .limit() es la siguiente:
+
+```
+db.collection.find().limit(numeroDeDocumentos);
+```
+
+Donde numeroDeDocumentos es la cantidad máxima de documentos que deseas recuperar.
 
 
+<hr>
+
+<a name="schema8"></a>
+
+## 8. Using Projection  our Results
 
 
+La proyección en MongoDB se refiere a la selección y exclusión de campos específicos en los resultados de una 
+consulta. La proyección te permite limitar los campos que se devuelven en los documentos recuperados, lo que puede 
+ser útil para reducir el tamaño de los resultados y mejorar el rendimiento de la consulta.
 
+- Datos anidados
+```
+movieData> db.movies.find({},{name:1,genres:2,runtime:1,rating:1}).pretty()
+[
+  {
+    _id: ObjectId('6565bd02f59902f29c66619f'),
+    name: 'Under the Dome',
+    genres: [ 'Drama', 'Science-Fiction', 'Thriller' ],
+    runtime: 60,
+    rating: { average: 6.5 }
+  },
 
+```
 
+En este ejemplo, se incluyen solo los campos "name","runtime","rating" y "genres" en los resultados. 
+El campo _id se excluye explícitamente utilizando { _id: 0 }.
+```
+movieData> db.movies.find({},{name:1,genres:2,runtime:1,rating:1,_id:0}).pretty()
+[
+  {
+    name: 'Under the Dome',
+    genres: [ 'Drama', 'Science-Fiction', 'Thriller' ],
+    runtime: 60,
+    rating: { average: 6.5 }
+  },
+```
+Pero como hacemos para solo obtener el valor de un dato anidado.
 
+```
+movieData> db.movies.find({},{name:1,genres:2,runtime:1,"rating.average":1,"schedule.time":1,_id:0}).pretty()
+[
+  {
+    name: 'Under the Dome',
+    genres: [ 'Drama', 'Science-Fiction', 'Thriller' ],
+    runtime: 60,
+    schedule: { time: '22:00' },
+    rating: { average: 6.5 }
+  },
 
+```
+- Datos con arrays
+```
+movieData> db.movies.find({genres:'Drama'},{name:1,"genres.$":1,runtime:1,"rating.average":1,_id:0}).pretty()
+[
+  {
+    name: 'Under the Dome',
+    genres: [ 'Drama' ],
+    runtime: 60,
+    rating: { average: 6.5 }
+  },
 
+```
+la siguiente proyección parece estar limitando la presentación de los campos. 
+En particular, la proyección `"genres.$": 1` solicita solo el primer elemento del array genres que 
+coincida con la condición. En el ejemplo proporcionado, el documento devuelto tiene "genres": ["Horror"].
 
+```
+movieData> db.movies.find({genres:{$all:['Drama','Horror']}},{name:1,"genres.$":1,runtime:1,"rating.average":1,_id:0})
+[
+  {
+    name: 'Bitten',
+    genres: [ 'Horror' ],
+    runtime: 60,
+    rating: { average: 7.6 }
+  }
+```
 
+<hr>
 
+<a name="schema9"></a>
 
+## 9. Understanding $slice
 
+El operador $slice en MongoDB se utiliza para limitar el número de elementos en un array que se devuelve en una 
+consulta. Puedes usarlo para seleccionar un subconjunto específico de elementos de un array.
 
+```
+movieData> db.movies.find( { genres: { $all: ['Drama', 'Horror'] } }, { name: 1, genres: { $slice: 2 }, runtime: 1, "rating.average": 1, _id: 0 } ).limit(5).pretty();
+[
+  {
+    name: 'Bitten',
+    genres: [ 'Drama', 'Horror' ],
+    runtime: 60,
+    rating: { average: 7.6 }
+  },
 
-
-
+```
 
 
 
